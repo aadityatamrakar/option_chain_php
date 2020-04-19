@@ -20,8 +20,6 @@
       </fieldset>
     </form>
     <div class="row">
-      <div style="height: 300px;" class="col-md-6" id="oiChart"></div>
-      <div style="height: 300px;" class="col-md-6" id="oiChgChart"></div>
       <div class="clearfix"></div>
       <div class="col-xs-12" id="content">Loading...</div>
     </div>
@@ -217,8 +215,8 @@
 
     function generateTbl() {
       let context = generateContext();
-      drawOIChgChart(context);
-      drawOIChart(context);
+      // drawOIChgChart(context);
+      // drawOIChart(context);
       renderTbl(context);
     }
 
