@@ -4,9 +4,8 @@
   <title>Option Chain Analysis</title>
 </head>
 
-<body onload="init()">
+<body>
   <div style="width:100%; height: 100%;" id="oiChgChart"></div>
-
 
   <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
   <script>
@@ -14,6 +13,7 @@
     google.charts.load('current', {
       packages: ['corechart', 'bar']
     });
+    google.charts.setOnLoadCallback(init);
 
     function drawOIChgChart(context) {
       let headers = ['Strike Prices', 'Call OI Chg', 'Put OI Chg'];
@@ -30,7 +30,7 @@
       var options = {
         chart: {
           title: 'Change in Open Interest',
-          subtitle: 'Underlying Value: ' + context.underlyingValue,
+          subtitle: '',
           legend: {
             position: 'none'
           }
@@ -55,7 +55,7 @@
       var options = {
         chart: {
           title: 'Open Interest',
-          subtitle: '',
+          subtitle: 'Underlying Value: ' + context.underlyingValue,
           legend: {
             position: 'none'
           }
@@ -67,10 +67,11 @@
 
     function getData(cb) {
       return new Promise((resolve, reject) => {
+        let currentTs = (new Date()).getTime();
         if (optionChainData != null) {
           resolve(optionChainData);
         } else {
-          fetch('nifty.json')
+          fetch('nifty.json?ts=' + currentTs, {cache: "no-store"})
             .then(resp => {
               if (resp.status != 200) throw new Error('something went wrong');
               return resp.json();
@@ -98,7 +99,7 @@
 
     function generateContext() {
       let expiryDate = selected_expiry;
-      let optionRange = 1000;
+      let optionRange = 500;
       let option_chain = optionChainData.records.data.filter(c => {
         return (
             c.strikePrice <= optionRange + (parseInt(underlyingValue / 100) * 100)) &&

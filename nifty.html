@@ -154,10 +154,11 @@
 
     function getData(cb) {
       return new Promise((resolve, reject) => {
+        let currentTs = (new Date()).getTime();
         if (optionChainData != null) {
           resolve(optionChainData);
         } else {
-          fetch('nifty.json')
+          fetch('nifty.json?ts=' + currentTs, {cache: "no-store"})
             .then(resp => {
               if (resp.status != 200) throw new Error('something went wrong');
               return resp.json();
