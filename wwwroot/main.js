@@ -2,7 +2,7 @@ var config = {};
 var optionRange, optionChainData, lastUpdated, underlyingValue, selected_expiry, option_chain = [];
 
 function drawOIChgChart(context) {
-    let headers = ['Strike Prices', 'Call OI Chg', 'Put OI Chg'];
+    let headers = ['Strike Prices', 'Put OI Chg', 'Call OI Chg'];
     let values = context.option_chain.map(strike => {
         return [
             String(strike.strikePrice),
@@ -19,16 +19,13 @@ function drawOIChgChart(context) {
             subtitle: 'Last Updated: ' + lastUpdated,
         },
         colors: ['green', 'red'],
-        legend: {
-            position: 'none'
-        }
     };
     var chart = new google.charts.Bar(document.getElementById('oiChgChart'));
     chart.draw(data, google.charts.Bar.convertOptions(options));
 }
 
 function drawOIChart(context) {
-    let headers = ['Strike Prices', 'Call OI', 'Put OI'];
+    let headers = ['Strike Prices', 'Put OI', 'Call OI'];
     let values = context.option_chain.map(strike => {
         return [
             String(strike.strikePrice),
@@ -45,9 +42,6 @@ function drawOIChart(context) {
             subtitle: 'Last Updated: ' + lastUpdated,
         },
         colors: ['green', 'red'],
-        legend: {
-            position: 'none'
-        }
     };
     var chart = new google.charts.Bar(document.getElementById('oiChart'));
     chart.draw(data, google.charts.Bar.convertOptions(options));
