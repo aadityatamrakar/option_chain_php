@@ -1,0 +1,115 @@
+<html>
+
+<head>
+  <title>Option Chain Analysis</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css"
+    crossorigin="anonymous" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.1.2/handlebars.min.js"></script>
+</head>
+
+<body>
+  <div class="container">
+    <h1>BankNifty Option Chain<br /><small>Underlying Value: <span id="underlyingValue"></span></small></h1>
+    <form class="inline-form">
+      <fieldset>
+        <div class="form-group-inline">
+          <label for="expiryDate" class="form-label">Expiry Date</label>
+          <select onchange="generateTbl()" name="expiryDate" id="expiryDate"></select>
+          &nbsp;&nbsp;<span id="lastUpdated"></span>
+        </div>
+      </fieldset>
+    </form>
+    <div class="row">
+      <div class="clearfix"></div>
+      <div class="col-xs-12" id="content">Loading...</div>
+    </div>
+
+  </div>
+
+
+  <script id="chain" type="text/x-handlebars-template">
+    <table class="table table-bordered table-striped">
+      <thead>
+        <tr>
+          <th>Interpretation</th>
+          <th>Call Volume</th>
+          <th>Call Net OI</th>
+          <th>Call change in OI</th>
+          <th>Call Price change</th>
+          <th>Call LTP</th>
+          <th>strike</th>
+          <th>Put LTP</th>
+          <th>Put Price Change</th>
+          <th>Put Change in OI</th>
+          <th>Put Net OI</th>
+          <th>Put Volume</th>
+          <th>Interpretation</th>
+          <!-- <th>PCR</th>
+          <th>PCR Indication</th> -->
+        </tr>
+      </thead>
+      <tbody>
+        {{#each option_chain}}
+        <tr>
+          {{#if CE_A.trend }}
+            <td class="text-success bg-success"><i class="glyphicon glyphicon-arrow-up"></i> {{ CE_A.i }} </td>
+          {{else}}
+            <td class="text-danger bg-danger"><i class="glyphicon glyphicon-arrow-down"></i> {{ CE_A.i }}</td>
+          {{/if}}
+          <td class="text-right">{{ CE.totalTradedVolume }}</td>
+          <td class="text-right">{{ CE.openInterest }}</td>
+          {{#if CE_A.OI}}
+            <td class="text-right text-success bg-success">{{ CE.changeinOpenInterest }} <i class="glyphicon glyphicon-arrow-up"></i></td>
+          {{else }}
+            <td class="text-right text-danger bg-danger">{{ CE.changeinOpenInterest }} <i class="glyphicon glyphicon-arrow-down"></i></td>
+          {{/if}}
+          {{#if CE_A.price}}
+            <td class="text-right text-success bg-success">{{ CE.change }} <i class="glyphicon glyphicon-arrow-up"></i></td>
+          {{else}}
+            <td class="text-right text-danger bg-danger">{{ CE.change }} <i class="glyphicon glyphicon-arrow-down"></i></td>
+          {{/if}}
+          <td class="text-right">{{ CE.lastPrice }}</td>
+          <th class="text-center">{{ strikePrice }}</th>
+          <td class="text-right">{{ PE.lastPrice }}</td>
+          
+          {{#if PE_A.price}}
+            <td class="text-right text-success bg-success">{{ PE.change }} <i class="glyphicon glyphicon-arrow-up"></i></td>
+          {{else}}
+            <td class="text-right text-danger bg-danger">{{ PE.change }} <i class="glyphicon glyphicon-arrow-down"></i></td>
+          {{/if}}
+          
+          {{#if PE_A.OI}}
+            <td class="text-right text-success bg-success">{{ PE.changeinOpenInterest }} <i class="glyphicon glyphicon-arrow-up"></i></td>
+          {{else }}
+            <td class="text-right text-danger bg-danger">{{ PE.changeinOpenInterest }} <i class="glyphicon glyphicon-arrow-down"></i></td>
+          {{/if}}
+
+          <td class="text-right">{{ PE.openInterest }}</td>
+          <td class="text-right">{{ PE.totalTradedVolume }}</td>
+          {{#if PE_A.trend }}
+            <td class="text-success bg-success"><i class="glyphicon glyphicon-arrow-up"></i> {{ PE_A.i }}</td>
+          {{else}}
+            <td class="text-danger bg-danger"><i class="glyphicon glyphicon-arrow-down"></i> {{ PE_A.i }}</td>
+          {{/if}}
+          <!-- <td>PCR</td>
+          <td>PCR Indication</td> -->
+        </tr>
+        {{/each}}
+      </tbody>
+    </table>
+
+    <p>Developed by <a href="https://www.facebook.com/aaditya.tamrakar.9" target="_blank">Aaditya Tamrakar</a></p>
+  </script>
+
+  <script type="text/javascript" src="main.js"></script>
+  <script>
+    window.onload = function () {
+      init({
+        type: 'table',
+        data: 'banknifty.json'
+      });
+    }
+  </script>
+</body>
+
+</html>

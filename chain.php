@@ -7,11 +7,11 @@ function getChain($instrument, $optionRange)
     $curl = curl_init();
 
     curl_setopt_array($curl, array(
-        CURLOPT_URL => "https://www.nseindia.com/api/option-chain-indices?symbol=" . $instrument,
+        CURLOPT_URL => "http://www.nseindia.com/api/option-chain-indices?symbol=" . $instrument,
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_ENCODING => "",
         CURLOPT_MAXREDIRS => 10,
-        CURLOPT_TIMEOUT => 0,
+        CURLOPT_TIMEOUT => 60,
         CURLOPT_FOLLOWLOCATION => true,
         CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
         CURLOPT_CUSTOMREQUEST => "GET",
@@ -28,33 +28,33 @@ function getChain($instrument, $optionRange)
     $response = curl_exec($curl);
 
     curl_close($curl);
-    
+
     $optionData = json_decode($response, true);
     unset($optionData['filtered']);
     unset($optionData['records']['strikePrices']);
     $underlyingValue = $optionData['records']['underlyingValue'];
     $removeExpiry = [];
     $i = 0;
-    
-    foreach ($optionData['records']['expiryDates'] as $key=>$expiry) {
+
+    foreach ($optionData['records']['expiryDates'] as $key => $expiry) {
         $i++;
         if ($i > 5) {
             $removeExpiry[] = $expiry;
             unset($optionData['records']['expiryDates'][$key]);
         }
     }
-    
+
     foreach ($optionData['records']['data'] as $key => $data) {
         if (array_search($data, $removeExpiry) != false) {
             unset($optionData['records']['data'][$key]);
-        } else if($data['strikePrice'] > ($underlyingValue + $optionRange) || $data['strikePrice'] < ($underlyingValue - $optionRange)) {
+        } else if ($data['strikePrice'] > ($underlyingValue + $optionRange) || $data['strikePrice'] < ($underlyingValue - $optionRange)) {
             unset($optionData['records']['data'][$key]);
         }
     }
-    
+
     $optionData['records']['data'] = array_values($optionData['records']['data']);
     $optionData['records']['expiryDates'] = array_values($optionData['records']['expiryDates']);
-    
+
     $optionFile = fopen($optionFileName, "w") or die("Unable to open file!");
     fwrite($optionFile, json_encode($optionData));
     fclose($optionFile);
@@ -65,3 +65,16 @@ getChain("NIFTY", 500);
 echo "BankNifty Downloading...\n";
 getChain("BANKNIFTY", 1500);
 echo "Downloading Complete!\n";
+
+// $ftp_server = "ftp.example.com";
+// $ftp_conn = ftp_connect($ftp_server) or die("Could not connect to $ftp_server");
+// $login = ftp_login($ftp_conn, $ftp_username, $ftp_userpass);
+// $file = "localfile.txt";
+// // upload file
+// if (ftp_put($ftp_conn, "serverfile.txt", $file, FTP_ASCII)) {
+//     echo "Successfully uploaded $file.";
+// } else {
+//     echo "Error uploading $file.";
+// }
+// // close connection
+// ftp_close($ftp_conn);
