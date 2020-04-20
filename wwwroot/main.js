@@ -1,5 +1,5 @@
 var config = {};
-var optionChainData, lastUpdated, underlyingValue, selected_expiry, option_chain = [];
+var optionRange, optionChainData, lastUpdated, underlyingValue, selected_expiry, option_chain = [];
 
 function drawOIChgChart(context) {
     let headers = ['Strike Prices', 'Call OI Chg', 'Put OI Chg'];
@@ -18,7 +18,7 @@ function drawOIChgChart(context) {
             title: 'Change in Open Interest | Underlying Value: ' + context.underlyingValue,
             subtitle: 'Last Updated: ' + lastUpdated,
         },
-        colors: ['red', 'green'],
+        colors: ['green', 'red'],
         legend: {
             position: 'none'
         }
@@ -44,7 +44,24 @@ function drawOIChart(context) {
             title: 'Open Interest | Underlying Value: ' + context.underlyingValue,
             subtitle: 'Last Updated: ' + lastUpdated,
         },
-        colors: ['red', 'green'],
+        colors: ['green', 'red'],
+        legend: {
+            position: 'none'
+        }
+    };
+    var chart = new google.charts.Bar(document.getElementById('oiChart'));
+    chart.draw(data, google.charts.Bar.convertOptions(options));
+}
+
+function drawMaxPain(values) {
+    let headers = ['Strike Prices', 'Max Pain'];
+    console.log([...headers, ...values]);
+    var data = google.visualization.arrayToDataTable([headers, ...values]);
+    var options = {
+        chart: {
+            title: 'Max Pain',
+            subtitle: 'Last Updated: ' + lastUpdated,
+        },
         legend: {
             position: 'none'
         }
@@ -79,7 +96,10 @@ function getData(jsonData) {
 }
 
 function init(conf) {
+    if (conf.data == 'nifty.json') optionRange = 500;
+    else if (conf.data == 'banknifty.json') optionRange = 1000;
     getData(conf.data).then(function (data) {
+        copyRight();
         expiryDates = data.records.expiryDates;
         underlyingValue = data.records.underlyingValue;
         selected_expiry = data.records.expiryDates[0];
@@ -91,15 +111,18 @@ function init(conf) {
         } else if (conf.type == 'table') {
             fillExpiryDate(expiryDates);
             document.querySelector('#underlyingValue').innerHTML = underlyingValue;
+            document.querySelector('#lastUpdated').innerHTML = lastUpdated;
             document.querySelector('#expiryDate').value = selected_expiry;
             renderTbl(context);
+        } else if (conf.type == 'maxpain') {
+            let maxpain = calculateMaxPain(context);
+            drawMaxPain(maxpain);
         }
-    })
+    });
 }
 
 function generateContext() {
     let expiryDate = selected_expiry;
-    let optionRange = 500;
     let option_chain = optionChainData.records.data.filter(c => {
         return (
                 c.strikePrice <= optionRange + (parseInt(underlyingValue / 100) * 100)) &&
@@ -116,7 +139,7 @@ function generateContext() {
         selected_expiry
     };
 
-    console.log(context);
+    window.currentContext = context;
     return context;
 }
 
@@ -171,24 +194,46 @@ function renderTbl(context) {
     document.getElementById('content').innerHTML = template(context);
 }
 
+function calculateMaxPain(context) {
+    maxPainStrike = context.option_chain.map(c => {
+        c.PE.openInterest = parseInt(String(c.PE.openInterest).replace(/,/g, ''));
+        c.CE.openInterest = parseInt(String(c.CE.openInterest).replace(/,/g, ''));
+        return c;
+    });
 
-/*
-
-temp1.option_chain.map(c => {
-    c.PE.openInterest = parseInt(String(c.PE.openInterest).replace(/,/g, ''));
-    c.CE.openInterest = parseInt(String(c.CE.openInterest).replace(/,/g, ''));
-    return c;
-}).map(c => {
-    if(c.strikePrice - temp1.underlyingValue > 0) {
-        c.PE.pain = c.PE.openInterest * (c.strikePrice - temp1.underlyingValue) * -1;
-        c.CE.pain = c.CE.openInterest * (c.strikePrice - temp1.underlyingValue);
-    }else {
-        c.CE.pain = c.CE.openInterest * (c.strikePrice - temp1.underlyingValue) * -1;
-        c.PE.pain = c.PE.openInterest * (c.strikePrice - temp1.underlyingValue);
+    let maxPain = [];
+    for (i = 0; i < maxPainStrike.length; i++) {
+        let pain = 0;
+        for (j = 0; j < maxPainStrike.length; j++) {
+            if (maxPainStrike[i].strikePrice > maxPainStrike[j].strikePrice) {
+                let diffAmount = maxPainStrike[j].strikePrice - maxPainStrike[i].strikePrice;
+                pain += diffAmount * maxPainStrike[j].PE.openInterest;
+            }
+            if (maxPainStrike[i].strikePrice < maxPainStrike[j].strikePrice) {
+                let diffAmount = maxPainStrike[i].strikePrice - maxPainStrike[j].strikePrice;
+                pain += diffAmount * maxPainStrike[j].CE.openInterest;
+            }
+        }
+        maxPain.push([maxPainStrike[i].strikePrice, Math.abs(pain)]);
     }
 
-    c.maxPain = Math.round(c.PE.pain + c.CE.pain);
-    return [c.strikePrice, c.maxPain];
-}) 
+    let lowest = maxPain.reduce((l, a) => {
+        return l > a[1] ? a[1] : l;
+    }, maxPain[0][1]);
+    
+    maxPain = maxPain.map(c => {
+        c[0] = String(c[0]);
+        c[1] = c[1] - (lowest * 0.95);
+        return c;
+    });
+    return maxPain;
+}
 
-*/
+function copyRight() {
+    let elm = document.createElement('p');
+    elm.innerHTML = '© StockManiacs.net'
+    elm.style.position = 'fixed';
+    elm.style.bottom = 0;
+    elm.style.left = 15;
+    document.body.appendChild(elm);
+}
