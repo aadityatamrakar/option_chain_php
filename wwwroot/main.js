@@ -90,6 +90,7 @@ function init(conf) {
             drawOIChgChart(context);
         } else if (conf.type == 'table') {
             fillExpiryDate(expiryDates);
+            document.querySelector('#underlyingValue').innerHTML = underlyingValue;
             document.querySelector('#expiryDate').value = selected_expiry;
             renderTbl(context);
         }
@@ -169,3 +170,25 @@ function renderTbl(context) {
     var template = Handlebars.compile(source);
     document.getElementById('content').innerHTML = template(context);
 }
+
+
+/*
+
+temp1.option_chain.map(c => {
+    c.PE.openInterest = parseInt(String(c.PE.openInterest).replace(/,/g, ''));
+    c.CE.openInterest = parseInt(String(c.CE.openInterest).replace(/,/g, ''));
+    return c;
+}).map(c => {
+    if(c.strikePrice - temp1.underlyingValue > 0) {
+        c.PE.pain = c.PE.openInterest * (c.strikePrice - temp1.underlyingValue) * -1;
+        c.CE.pain = c.CE.openInterest * (c.strikePrice - temp1.underlyingValue);
+    }else {
+        c.CE.pain = c.CE.openInterest * (c.strikePrice - temp1.underlyingValue) * -1;
+        c.PE.pain = c.PE.openInterest * (c.strikePrice - temp1.underlyingValue);
+    }
+
+    c.maxPain = Math.round(c.PE.pain + c.CE.pain);
+    return [c.strikePrice, c.maxPain];
+}) 
+
+*/
