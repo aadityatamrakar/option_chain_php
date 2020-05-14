@@ -5,6 +5,14 @@ const option_chain = require('./nse_lib');
 const app = express();
 const port = process.env.PORT || 8080;
 app.use(express.static('wwwroot'))
+app.get('/start', (req, res) => {
+  new CronJob('0 * * * * *', function () {
+    console.log('Downloading json...');
+    saveData('NIFTY');
+    saveData('BANKNIFTY');
+  }, null, true, 'Asia/Kolkata');
+  res.send('started');
+});
 app.get('*', (req, res) => res.redirect('/nifty.html'));
 app.listen(port, () => console.log(`Example app listening on port ${port}!`))
 
@@ -21,13 +29,13 @@ function saveData(instrument) {
 
 saveData('NIFTY');
 saveData('BANKNIFTY');
-new CronJob('0 13 9 * * *', function () {
-  new CronJob('* * * * * *', function () {
+new CronJob('0 13 9 * * 1-5', function () {
+  new CronJob('0 * * * * *', function () {
     console.log('Downloading json...');
     saveData('NIFTY');
     saveData('BANKNIFTY');
   }, null, true, 'Asia/Kolkata');
 }, null, true, 'Asia/Kolkata');
-new CronJob('0 31 15 * * *', function () {
-    process.exit();
+new CronJob('0 31 15 * * 1-5', function () {
+  process.exit();
 }, null, true, 'Asia/Kolkata');

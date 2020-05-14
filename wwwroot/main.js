@@ -192,35 +192,58 @@ function calculateMaxPain(context) {
     maxPainStrike = context.option_chain.map(c => {
         c.PE.openInterest = parseInt(String(c.PE.openInterest).replace(/,/g, ''));
         c.CE.openInterest = parseInt(String(c.CE.openInterest).replace(/,/g, ''));
-        return c;
+        c.PE.chgOpenInterest = parseInt(String(c.PE.changeinOpenInterest).replace(/,/g, ''));
+        c.CE.chgOpenInterest = parseInt(String(c.CE.changeinOpenInterest).replace(/,/g, ''));
+        return {
+            strike: c.strikePrice,
+            callOI: c.CE.openInterest,
+            putOI: c.PE.openInterest,
+            callValue: 0,
+            putValue: 0,
+            totalPain: 0
+        };
     });
 
-    let maxPain = [];
     for (i = 0; i < maxPainStrike.length; i++) {
-        let pain = 0;
-        for (j = 0; j < maxPainStrike.length; j++) {
-            if (maxPainStrike[i].strikePrice > maxPainStrike[j].strikePrice) {
-                let diffAmount = maxPainStrike[j].strikePrice - maxPainStrike[i].strikePrice;
-                pain += diffAmount * maxPainStrike[j].PE.openInterest;
-            }
-            if (maxPainStrike[i].strikePrice < maxPainStrike[j].strikePrice) {
-                let diffAmount = maxPainStrike[i].strikePrice - maxPainStrike[j].strikePrice;
-                pain += diffAmount * maxPainStrike[j].CE.openInterest;
-            }
-        }
-        maxPain.push([maxPainStrike[i].strikePrice, Math.abs(pain)]);
+        maxPainStrike[i].call_A = maxPainStrike[i].strike;
+        maxPainStrike[i].call_B = sumRange(maxPainStrike, 'callOI', 0, i);
+        maxPainStrike[i].call_C = sumProductRange(maxPainStrike, 'strike', 'callOI', 0, i);
+
+        maxPainStrike[i].callValue = (maxPainStrike[i].call_A * maxPainStrike[i].call_B) - (maxPainStrike[i].call_C);
+
+        maxPainStrike[i].put_A = maxPainStrike[i].strike;
+        maxPainStrike[i].put_B = sumRange(maxPainStrike, 'putOI', i, maxPainStrike.length - 1);
+        maxPainStrike[i].put_C = sumProductRange(maxPainStrike, 'strike', 'putOI', i, maxPainStrike.length - 1);
+
+        maxPainStrike[i].putValue = (maxPainStrike[i].put_C) - (maxPainStrike[i].put_A * maxPainStrike[i].put_B);
+        maxPainStrike[i].totalPain = maxPainStrike[i].putValue + maxPainStrike[i].callValue;
+
+        delete maxPainStrike[i].call_A;
+        delete maxPainStrike[i].put_A;
+        delete maxPainStrike[i].call_B;
+        delete maxPainStrike[i].put_B;
+        delete maxPainStrike[i].call_C;
+        delete maxPainStrike[i].put_C;
     }
 
-    let lowest = maxPain.reduce((l, a) => {
-        return l > a[1] ? a[1] : l;
-    }, maxPain[0][1]);
-    
-    maxPain = maxPain.map(c => {
-        c[0] = String(c[0]);
-        c[1] = c[1] - (lowest * 0.95);
-        return c;
-    });
-    return maxPain;
+    let maxPainData = maxPainStrike.map(c => ([String(c.strike), c.totalPain]));
+    return maxPainData;
+}
+
+function sumRange(obj, k, start, end) {
+    let s = 0;
+    for (let i = start; i < end; i++) {
+        s += obj[i][k];
+    }
+    return s;
+}
+
+function sumProductRange(obj, k, k2, start, end) {
+    let s = 0;
+    for (let i = start; i < end; i++) {
+        if (obj[i][k] != 0 && obj[i][k2] != 0) s += obj[i][k] * obj[i][k2];
+    }
+    return s;
 }
 
 function copyRight() {
